@@ -163,6 +163,11 @@ pub fn diff_mji(testcase: &ClashTestCase, stdout: &str, ostyle: &OutputStyle) {
     let dim_color = ansi_term::Style::new().fg(ansi_term::Color::RGB(50,50,50));
     let ws_style = &ostyle.output_whitespace.unwrap_or(ostyle.output);
 
+    if stdout.is_empty() {
+        println!("{}", dim_color.paint("(no output)"));
+        return
+    }
+
     let expected_lines = LinesWithEndings::from(&testcase.test_out);
     let actual_lines = LinesWithEndings::from(stdout);
 
@@ -196,11 +201,14 @@ pub fn diff_mji(testcase: &ClashTestCase, stdout: &str, ostyle: &OutputStyle) {
         }
     }
 
+    if !stdout.ends_with('\n') {
+        println!()
+    }
+
     if missing_lines > 0 {
-        let msg = format!("\n(expected {} more lines)", missing_lines);
+        let msg = format!("(expected {} more lines)", missing_lines);
         println!("{}", dim_color.paint(msg));
     }
-    println!();
 }
 
 pub fn diff_rafa_zipped(testcase: &ClashTestCase, stdout: &str, ostyle: &OutputStyle) {
