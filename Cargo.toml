@@ -11,11 +11,9 @@ rand = "0.8.5"
 serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
 shlex = "1.2.0"
-regex = "1"
 reqwest = { version = "0.11.22", features = ["blocking"] }
 clap_complete = "4.4.3"
 ansi_term = "0.12"
-lazy_static = "1.4.0"
 indoc = "2.0.4"
 dissimilar = "1.0.7"
 itertools = "0.11.0"
