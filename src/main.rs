@@ -7,6 +7,7 @@ use clap::ArgMatches;
 use clashlib::clash::{Clash, TestCase};
 use clashlib::outputstyle::OutputStyle;
 use clashlib::solution;
+use clashlib::stub;
 use directories::ProjectDirs;
 use rand::seq::IteratorRandom;
 
@@ -148,6 +149,19 @@ fn cli() -> clap::Command {
                 )
         )
         .subcommand(
+            Command::new("generate-stub")
+                .alias("gen")
+                .about("Generate input handling code for a given language")
+                .arg(arg!(<PROGRAMMING_LANGUAGE> ... "programming language of the solution stub"))
+                .after_help(
+                    "Prints boilerplate code for the input of the current clash.\
+                    \nIntended to be piped to a file.\
+                    \nExamples:\
+                    \n  $ clash generate-stub ruby > sol.rb\
+                    \n  $ clash generate-stub bash > sol.sh"
+            )
+        )
+        .subcommand(
             Command::new("generate-shell-completion")
                 .about("Generate shell completion")
                 .arg(arg!(<SHELL>).value_parser(value_parser!(clap_complete::Shell)))
@@ -200,6 +214,13 @@ impl App {
         let content = std::fs::read_to_string(&self.current_clash_file)
             .with_context(|| format!("Unable to read {:?}", &self.current_clash_file))?;
         PublicHandle::from_str(&content)
+    }
+
+    fn programming_language_from_args(&self, args: &ArgMatches) -> Result<String> {
+        match args.get_one::<String>("PROGRAMMING_LANGUAGE") {
+            Some(s) => Ok(s.to_owned()),
+            None => Err(anyhow!("No programming language given")),
+        }
     }
 
     fn clashes(&self) -> Result<std::fs::ReadDir> {
@@ -460,6 +481,21 @@ impl App {
         Ok(())
     }
 
+    fn generate_stub(&self, args: &ArgMatches) -> Result<()> {
+        let handle = self.current_handle()
+            .expect("You must have a current clash to generate stubs. Please use clash next");
+        let clash: Clash = self.read_clash(&handle).expect("Could not find clash.");
+        let stub_generator = clash.stub_generator()
+            .expect("Clash provides no input stub generator");
+        let language = self.programming_language_from_args(args)
+            .expect("Programming language not provided");
+
+        let stub = stub::generate(language, stub_generator);
+
+        println!("{stub}");
+        Ok(())
+    }
+
     fn json(&self, args: &ArgMatches) -> Result<()> {
         let handle = match args.get_one::<PublicHandle>("PUBLIC_HANDLE") {
             Some(h) => h.to_owned(),
@@ -501,6 +537,7 @@ fn main() -> Result<()> {
         Some(("fetch", args)) => app.fetch(args),
         Some(("showtests", args)) => app.showtests(args),
         Some(("json", args)) => app.json(args),
+        Some(("generate-stub", args)) => app.generate_stub(args),
         Some(("generate-shell-completion", args)) => app.generate_completions(args),
         _ => Err(anyhow!("unimplemented subcommand")),
     }

@@ -1,0 +1,10 @@
+name = "ruby"
+variable_format = "snake_case"
+source_file_ext = "rb"
+
+[type_tokens]
+Int = "to_i"
+Long = "to_i"
+Float = "to_f"
+Bool = "to_bool"
+
